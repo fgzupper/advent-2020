@@ -1,10 +1,25 @@
 # advent_2020
 
 My solutions for [advent of code 2020](https://adventofcode.com/).
+Starting with Clojure because Clojure is cool.
+(But we may go with Go later.)
+
+## Prerequisites
+
+You will either need [Leiningen](https://leiningen.org/) 2.0.0+ or the
+[Clojure CLI tools](https://clojure.org/guides/deps_and_cli) installed.
 
 ## Usage
 
-Just a project skeleton for now, but hey, things may change.
+With lein:
+```sh
+  lein run -m advent-2020.day-01
+```
+With clj:
+```sh
+  clj -m advent-2020.day-01
+```
+(For later days, increment the day number.)
 
 ## License
 
