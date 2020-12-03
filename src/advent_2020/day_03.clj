@@ -4,45 +4,27 @@
             [clojure.math.combinatorics :as combo]
             [clojure.string :as str]))
 
-;; could io/resource, but that'd require a repl restart
 (def data
-  (->> "resources/day_03_input"
-       slurp str/split-lines
-       ))
+  (->> (io/resource "day_03_input")
+       slurp str/split-lines))
 
-(def example-data
-  [
-   "..##......."
-"#...#...#.."
-".#....#..#."
-"..#.#...#.#"
-".#...##..#."
-"..#.##....."
-".#.#.#....#"
-".#........#"
-"#.##...#..."
-"#...##....#"
-".#..#...#.#"
-   ])
+(def example
+  ["..##......."
+   "#...#...#.."
+   ".#....#..#."
+   "..#.#...#.#"
+   ".#...##..#."
+   "..#.##....."
+   ".#.#.#....#"
+   ".#........#"
+   "#.##...#..."
+   "#...##....#"
+   ".#..#...#.#"])
 
-;; y increase 1, x increase 3
-;; (or just x increase 3)
-(defn trees-hit [field]
-  (reduce (fn [{:keys [idx hits]
-                :as acc} row]
-            {:idx (+ idx 3)
-             :hits (if (= (get row (mod idx (count row))) \#) (inc hits) hits)})
-          {:idx 0 :hits 0}
-          field))
-
-(trees-hit example-data)
-(trees-hit data)
-(trees-hit ["#..."])
-(trees-hit ["#..."
-            "...#"])
-
-(- 0.5 (int 0.5))
-(- 1 (int 1))
+;; So, for the tricks:
+;; - Each row is a string; use `get` to grab a char from an index
+;; - Instead of repeating a row, just mod the index by length of the row
+;; - A fractional xdif (slope) can be used to skip a row (`zero? check skips).
 (defn trees-hit-slope [field xdif]
   (reduce (fn [{:keys [idx hits]
                 :as acc} row]
@@ -52,17 +34,25 @@
                      (inc hits) hits)})
           {:idx 0 :hits 0}
           field))
+;; (In a long-lived codebase, we'd extract lines 35-57 into let bindings.)
 
-(trees-hit-slope data 3)
-(trees-hit-slope data 3)
+(def slopes [1 3 5 7 0.5])
 
-(->> [1 3 5 7 0.5]
-     (map trees-hit-slope (repeat data))
-;     (map trees-hit-slope (repeat example-data))
-     (map :hits)
-     (reduce *))
+;; Once we have that, all we gotta do is handle all the slopes,
+;; extract the hits, and multiply those together.
+(defn multiply-hits [field slopes]
+  (->> slopes
+       (map trees-hit-slope (repeat field))
+       (map :hits)
+       (reduce *)))
 
 (defn -main []
   (time
-    (do
-        )))
+    (do (println "Example (part 1):")
+        (println (trees-hit-slope example 3))
+        (println "Real (part 1):")
+        (println (trees-hit-slope data 3))
+        (println "Example (part 2):")
+        (println (multiply-hits example slopes))
+        (println "Real (part 2):")
+        (println (multiply-hits data slopes)))))
