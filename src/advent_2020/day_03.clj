@@ -34,7 +34,7 @@
                      (inc hits) hits)})
           {:idx 0 :hits 0}
           field))
-;; (In a long-lived codebase, we'd extract lines 35-57 into let bindings.)
+;; (In a long-lived codebase, we'd extract lines 32-34 into let bindings.)
 
 (def slopes [1 3 5 7 0.5])
 
