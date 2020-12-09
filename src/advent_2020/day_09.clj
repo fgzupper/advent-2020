@@ -31,17 +31,21 @@
 ;; (Rats, wasn't the modification that I expected.)
 (defn find-weakness [numbers secret]
   (let [cnt (count numbers)]
-    (loop [s-idx 0  ; inclusive
-           e-idx 2] ; exclusive
+    (loop [s-idx 0 ; inclusive
+           e-idx 2 ; exclusive
+           grow? true
+           prevs (get numbers s-idx)]
       (when (<= e-idx cnt) ; OOB -> stop
         (let [v (subvec numbers s-idx e-idx)
-              sum (reduce + v)]
+              sum (if grow?
+                    (+ prevs (get numbers (dec e-idx)))
+                    (- prevs (get numbers (dec s-idx))))]
           (cond ; check for just right, too big, or too small.
             (= secret sum) (let [mx (reduce max v)
                                  mn (reduce min v)]
                              (+ mx mn)) ; weakness found
-            (< secret sum) (recur (inc s-idx) (+ s-idx 3))
-            :else (recur s-idx (inc e-idx))))))))
+            (< secret sum) (recur (inc s-idx) e-idx false sum)
+            :else (recur s-idx (inc e-idx) true sum)))))))
 
 (defn -main []
   (time
