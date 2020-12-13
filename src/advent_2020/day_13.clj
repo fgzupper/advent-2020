@@ -54,17 +54,14 @@
   (let [[[_0 start] & more] (parse2 data)]
     (loop [answer start ; First candidate
            ab-mod start ; Solution unique mod this (add it for next candidate)
-           checks [[0 start]] ; First check (add these gradually)
            busses more]
       (if-let [next-bus (first busses)]
-        (let [new-checks (cons next-bus checks) ; include next check in list
-              new-answer (some #(when (every? (partial check %) new-checks) %)
+        (let [new-answer (some #(when (check % next-bus) %)
                                (->> (range) ; infinite lazy sequence
                                     (map (partial * ab-mod)) ; 0*ab, 1*ab, ...
                                     (map (partial + answer))))] ; + last answer
           (recur new-answer
                  (* ab-mod (second next-bus))
-                 new-checks
                  (rest busses)))
         ;; Base case (no more checks):
         answer))))
