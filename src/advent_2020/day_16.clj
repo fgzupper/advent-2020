@@ -62,26 +62,17 @@
        (map #(str/split % #","))
        (map (partial mapv edn/read-string))))
 
-;; We do some stateful nonsense here...
-;; We have a valid ticket (vector of numbers)
-;; We have a vector of atoms of sets of fields allowed per position.
-;; Map works on multiple collections, so we get one of each (number, atom-set).
-;; We then remove elements from that set for which the number isn't valid.
-;; [Why atoms? In hindsight, reduce without atoms could have been better.]
-(defn filter-via-ticket!
-  [field->allowed-values ticket fields-by-idx]
-  (doall
-    (map (fn [ticket-num field-atom]
-           (let [drop-set (->> @field-atom
-                               (remove (fn [f] ((field->allowed-values f) ticket-num)))
-                               set)]
-             (swap! field-atom set/difference drop-set)))
-         ticket
-         fields-by-idx)))
+(defn trim-sets-per-ticket
+  [field->allowed-values field-sets ticket]
+  (map (fn [field-set ticket-num]
+         (->> field-set
+              (filter (fn [f] ((field->allowed-values f) ticket-num)))
+              set))
+       field-sets
+       ticket))
 
-;; After that nonsense, we have a vector of sets, where each set is
-;;  all the remaining possible fields per position.
-;; This just backtracks through those until it finds a valid combination.
+;; Now that we have trimmed down the sets of allowed fields per position,
+;; (as one does with a sudoku puzzle), we can solve it with backtracking.
 (defn one-per-set [[next-set & after-sets :as all-sets]]
   (cond (nil? next-set)  '()   ; successfully reached end!
         (= #{} next-set) false ; no valid options, undo a choice
@@ -103,14 +94,13 @@
         valid-nearby (->> nearby
                           parse-nearby-2
                           (filter (partial every? allowed-union)))
-        ordering (->> field->allowed-values keys set
-                      (repeat (count ticket))
-                      (mapv atom))
-        _ (run! #(filter-via-ticket! field->allowed-values
-                                     %
-                                     ordering) valid-nearby)
-        fixed-ordering (mapv deref ordering)
-        single-ordering (one-per-set fixed-ordering)
+        initial-sets (->> field->allowed-values keys set
+                          (repeat (count ticket)))
+        refined-sets (reduce (partial trim-sets-per-ticket
+                                        field->allowed-values)
+                             initial-sets
+                             valid-nearby)
+        single-ordering (one-per-set refined-sets)
         ticket-map (zipmap single-ordering ticket)]
     ticket-map))
 
@@ -120,5 +110,5 @@
           a2 (->> (get-ticket-map data)
                   (keep (fn [[k v]] (when (str/starts-with? k "departure") v)))
                   (reduce *))]
-      (println "Anser to part 1:" a1)
-      (println "Anser to part 2:" a2))))
+      (println "Answer to part 1:" a1)
+      (println "Answer to part 2:" a2))))
